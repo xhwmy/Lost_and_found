@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}我的收藏 - 校园失物招领平台{% endblock %}
+
+{% block content %}
+<h3 class="mb-4">我的收藏</h3>
+
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <a class="nav-link {% if fav_type == 'lost_item' %}active{% endif %}" 
+           href="{{ url_for('user.favorites', type='lost_item') }}">收藏的失物</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if fav_type == 'found_item' %}active{% endif %}" 
+           href="{{ url_for('user.favorites', type='found_item') }}">收藏的招领</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if fav_type == 'post' %}active{% endif %}" 
+           href="{{ url_for('user.favorites', type='post') }}">收藏的帖子</a>
+    </li>
+</ul>
+
+{% if fav_type == 'lost_item' %}
+<div class="row">
+    {% for favorite in pagination.items %}
+    {% if favorite.lost_item %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ favorite.lost_item.title }}</h5>
+                <p class="card-text text-muted">{{ favorite.lost_item.description[:80] }}...</p>
+                <div class="d-flex justify-content-between text-muted small">
+                    <span>分类: {{ favorite.lost_item.category }}</span>
+                    <span>地点: {{ favorite.lost_item.location }}</span>
+                </div>
+                <div class="text-muted small mt-2">
+                    <i class="bi bi-calendar"></i> 丢失时间: {{ favorite.lost_item.lost_time.strftime('%Y-%m-%d') if favorite.lost_item.lost_time else '未知' }}
+                </div>
+                <small class="text-muted">收藏于 {{ favorite.created_at.strftime('%Y-%m-%d') }}</small>
+                <a href="{{ url_for('user.lost_item_detail', item_id=favorite.lost_item_id) }}" 
+                   class="btn btn-sm btn-primary mt-2 w-100">查看详情</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+{% elif fav_type == 'found_item' %}
+<div class="row">
+    {% for favorite in pagination.items %}
+    {% if favorite.found_item %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ favorite.found_item.title }}</h5>
+                <p class="card-text text-muted">{{ favorite.found_item.description[:80] }}...</p>
+                <div class="d-flex justify-content-between text-muted small">
+                    <span>分类: {{ favorite.found_item.category }}</span>
+                    <span>地点: {{ favorite.found_item.location }}</span>
+                </div>
+                <div class="text-muted small mt-2">
+                    <i class="bi bi-calendar"></i> 拾取时间: {{ favorite.found_item.found_time.strftime('%Y-%m-%d') if favorite.found_item.found_time else '未知' }}
+                </div>
+                <small class="text-muted">收藏于 {{ favorite.created_at.strftime('%Y-%m-%d') }}</small>
+                <a href="{{ url_for('user.found_item_detail', item_id=favorite.found_item_id) }}" 
+                   class="btn btn-sm btn-success mt-2 w-100">查看详情</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+{% else %}
+<div class="list-group">
+    {% for favorite in pagination.items %}
+    {% if favorite.post %}
+    <a href="{{ url_for('user.forum_post', post_id=favorite.post_id) }}" 
+       class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 justify-content-between">
+            <h5 class="mb-1">{{ favorite.post.title }}</h5>
+            <small class="text-muted">{{ favorite.created_at.strftime('%Y-%m-%d') }}</small>
+        </div>
+        <p class="mb-1 text-muted">{{ favorite.post.content[:100] }}...</p>
+        <small>
+            <i class="bi bi-person"></i> {{ favorite.post.author_name }}
+            <i class="bi bi-chat ms-3"></i> {{ favorite.post.reply_count }}
+        </small>
+    </a>
+    {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if not pagination.items %}
+<div class="text-center text-muted py-5">
+    <i class="bi bi-star" style="font-size: 3rem;"></i>
+    <p class="mt-3">暂无收藏</p>
+</div>
+{% endif %}
+
+{% if pagination.pages > 1 %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('user.favorites', page=pagination.prev_num, type=fav_type) }}">上一页</a>
+        </li>
+        {% for page_num in pagination.iter_pages() %}
+            {% if page_num %}
+            <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('user.favorites', page=page_num, type=fav_type) }}">{{ page_num }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('user.favorites', page=pagination.next_num, type=fav_type) }}">下一页</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

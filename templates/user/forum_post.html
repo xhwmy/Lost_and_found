@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} - 校园众筹平台{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-body">
+        <h3>{{ post.title }}</h3>
+        <div class="d-flex justify-content-between text-muted mb-3">
+            <span>
+                <i class="bi bi-person"></i> {{ post.author_name }}
+                {% if post.is_admin_post %}
+                <span class="badge bg-danger ms-1">管理员</span>
+                {% endif %}
+                {% if post.category %}
+                <span class="badge bg-secondary ms-2">{{ post.category }}</span>
+                {% endif %}
+            </span>
+            <span>
+                <i class="bi bi-calendar"></i> {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}
+
+            </span>
+        </div>
+        <hr>
+        <div class="post-content">
+            {{ post.content }}
+        </div>
+        
+        {% if session.get('user_id') %}
+        <div class="mt-3">
+            {% if session.get('user_id') == post.user_id and post.user_id %}
+            <form method="POST" action="{{ url_for('user.delete_own_post', post_id=post.id) }}" 
+                  style="display:inline;" onsubmit="return confirm('确定要删除吗？')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-danger">删除帖子</button>
+            </form>
+            {% endif %}
+            <button class="btn btn-sm btn-outline-secondary" id="favoriteBtn" data-post-id="{{ post.id }}">
+                {% if is_favorited %}
+                <i class="bi bi-star-fill"></i> 已收藏
+                {% else %}
+                <i class="bi bi-star"></i> 收藏
+                {% endif %}
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 回复列表 -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">回复 ({{ replies|length }})</h5>
+    </div>
+    <div class="card-body">
+        {% if replies %}
+            {% for reply in replies %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-title">
+                                {% if reply.admin_reply %}
+                                    管理员
+                                {% elif reply._cached_author_name %}
+                                    {{ reply._cached_author_name }}
+                                {% elif reply.user_id %}
+                                    用户{{ reply.user_id }}
+                                {% else %}
+                                    匿名用户
+                                {% endif %}
+                                {% if reply.admin_reply %}
+                                <span class="badge bg-danger ms-1">管理员</span>
+                                {% endif %}
+                            </h6>
+                            <small class="text-muted">
+                                <i class="bi bi-calendar"></i> {{ reply.created_at.strftime('%Y-%m-%d %H:%M') }}
+                            </small>
+                        </div>
+                        {% if session.get('user_id') %}
+                        <div>
+                            {% if session.get('user_id') == reply.user_id or session.get('user_id') == post.user_id or session.get('admin_id') %}
+                            <form method="POST" action="{{ url_for('user.delete_own_reply', reply_id=reply.id) }}" 
+                                  style="display:inline;" onsubmit="return confirm('确定要删除这条评论吗？')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <p class="card-text mt-2">{{ reply.content }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-muted text-center">暂无回复</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 回复表单 -->
+{% if session.get('user_id') %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">发表回复</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('user.reply_post', post_id=post.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <textarea class="form-control" name="content" rows="4" 
+                          placeholder="输入您的回复..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">发表回复</button>
+            <a href="{{ url_for('user.forum') }}" class="btn btn-secondary">返回论坛</a>
+        </form>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> 请先<a href="{{ url_for('user.login') }}">登录</a>后再发表回复
+</div>
+{% endif %}
+
+<script>
+// 设置收藏按钮事件
+document.addEventListener('DOMContentLoaded', function() {
+    const favoriteBtn = document.getElementById('favoriteBtn');
+    if (favoriteBtn) {
+        favoriteBtn.addEventListener('click', function() {
+            const postId = this.getAttribute('data-post-id');
+            toggleFavoritePost(postId);
+        });
+    }
+});
+
+function toggleFavoritePost(postId) {
+    // 获取CSRF令牌
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    
+    fetch('/user/forum/post/' + postId + '/favorite', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'csrf_token=' + csrfToken
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('收藏操作失败:', error);
+        alert('收藏操作失败，请重试');
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}个人中心 - 校园失物招领平台{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <img src="https://via.placeholder.com/150" class="rounded-circle mb-3" width="100">
+                <h5>{{ user.username }}</h5>
+                <p class="text-muted">{{ user.email }}</p>
+                <p>注册时间: {{ user.created_at.strftime('%Y-%m-%d') }}</p>
+            </div>
+        </div>
+        
+        <div class="list-group mt-3">
+            <a href="{{ url_for('user.profile') }}" class="list-group-item list-group-item-action active">
+                <i class="bi bi-person"></i> 个人信息
+            </a>
+            <a href="{{ url_for('user.edit_profile') }}" class="list-group-item list-group-item-action">
+                <i class="bi bi-pencil"></i> 修改信息
+            </a>
+            <a href="{{ url_for('user.change_password') }}" class="list-group-item list-group-item-action">
+                <i class="bi bi-key"></i> 修改密码
+            </a>
+            <a href="{{ url_for('user.my_lost_items') }}" class="list-group-item list-group-item-action">
+                <i class="bi bi-folder"></i> 我的失物
+            </a>
+            <a href="{{ url_for('user.my_found_items') }}" class="list-group-item list-group-item-action">
+                <i class="bi bi-cash"></i> 我的招领
+            </a>
+            <a href="{{ url_for('user.claim_records') }}" class="list-group-item list-group-item-action">
+                <i class="bi bi-check-circle"></i> 认领记录
+            </a>
+        </div>
+    </div>
+    
+    <div class="col-md-9">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">数据统计</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h3 class="text-primary">{{ stats.lost_count }}</h3>
+                        <p class="text-muted">发布失物</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h3 class="text-success">{{ stats.found_count }}</h3>
+                        <p class="text-muted">发布招领</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h3 class="text-info">{{ stats.claim_count }}</h3>
+                        <p class="text-muted">线索/认领</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">个人信息</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th width="150">用户名：</th>
+                        <td>{{ user.username }}</td>
+                    </tr>
+                    <tr>
+                        <th>邮箱：</th>
+                        <td>{{ user.email }}</td>
+                    </tr>
+                    <tr>
+                        <th>真实姓名：</th>
+                        <td>{{ user.real_name or '未填写' }}</td>
+                    </tr>
+                    <tr>
+                        <th>手机号：</th>
+                        <td>{{ user.phone or '未填写' }}</td>
+                    </tr>
+                    <tr>
+                        <th>学号：</th>
+                        <td>{{ user.student_id or '未填写' }}</td>
+                    </tr>
+                    <tr>
+                        <th>学校：</th>
+                        <td>{{ user.school or '未填写' }}</td>
+                    </tr>
+                    <tr>
+                        <th>身份证号：</th>
+                        <td>{{ user.id_card_number or '未填写' }}</td>
+                    </tr>
+                    <tr>
+                        <th>注册时间：</th>
+                        <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

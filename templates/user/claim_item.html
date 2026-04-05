@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}认领申请 - 校园失物招领平台{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('user.index') }}">首页</a></li>
+                {% if item_type == 'lost' %}
+                <li class="breadcrumb-item"><a href="{{ url_for('user.lost_items') }}">失物信息</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('user.lost_item_detail', item_id=item.id) }}">{{ item.title }}</a></li>
+                {% else %}
+                <li class="breadcrumb-item"><a href="{{ url_for('user.found_items') }}">招领信息</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('user.found_item_detail', item_id=item.id) }}">{{ item.title }}</a></li>
+                {% endif %}
+                <li class="breadcrumb-item active" aria-current="page">认领申请</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0">
+                    {% if item_type == 'lost' %}
+                    提供线索：{{ item.title }}
+                    {% else %}
+                    申请认领：{{ item.title }}
+                    {% endif %}
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5>物品信息</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>分类：</strong>{{ item.category }}</p>
+                            <p><strong>地点：</strong>{{ item.location }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            {% if item_type == 'lost' %}
+                            <p><strong>丢失时间：</strong>{{ item.lost_time.strftime('%Y-%m-%d') if item.lost_time else '未知' }}</p>
+                            {% else %}
+                            <p><strong>拾取时间：</strong>{{ item.found_time.strftime('%Y-%m-%d') if item.found_time else '未知' }}</p>
+                            {% endif %}
+                            <p><strong>发布者：</strong>{{ item.creator.username }}</p>
+                        </div>
+                    </div>
+                    <p><strong>详细描述：</strong></p>
+                    <p style="white-space: pre-wrap;">{{ item.description }}</p>
+                </div>
+                
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label for="description" class="form-label">认领说明 *</label>
+                        <textarea class="form-control" id="description" name="description" rows="5" 
+                                  placeholder="请详细描述您与该物品的关系，以及您是如何发现/丢失该物品的，以便管理员审核..." required></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        {% if item_type == 'lost' %}
+                        <a href="{{ url_for('user.lost_item_detail', item_id=item.id) }}" class="btn btn-secondary">取消</a>
+                        {% else %}
+                        <a href="{{ url_for('user.found_item_detail', item_id=item.id) }}" class="btn btn-secondary">取消</a>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary">{% if item_type == 'lost' %}提交线索{% else %}提交认领申请{% endif %}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

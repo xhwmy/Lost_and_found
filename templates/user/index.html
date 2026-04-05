@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 校园失物招领平台{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 热门搜索标签点击事件
+    document.querySelectorAll('.hot-tag').forEach(tag => {
+        tag.addEventListener('click', function() {
+            const searchTerm = this.textContent.trim();
+            document.getElementById('global-search-input').value = searchTerm;
+            document.getElementById('global-search-form').submit();
+        });
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<!-- 轮播图 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div id="carouselBanner" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                <div class="carousel-item active">
+                    <div class="bg-primary text-white p-5 rounded" style="min-height: 300px; background: linear-gradient(to bottom, #e6f7ff 0%, #4A90E2 100%) !important;">
+                        <div class="text-center">
+                            <h1 class="display-4">校园失物招领平台</h1>
+                            <p class="lead">让失物重回主人手中，让爱心传递校园</p>
+                            <div class="d-grid gap-2 d-md-block">
+                                <a href="{{ url_for('user.lost_items') }}" class="btn btn-outline-light btn-lg">
+                                    <i class="bi bi-search"></i> 浏览失物信息
+                                </a>
+                                <a href="{{ url_for('user.found_items') }}" class="btn btn-outline-light btn-lg">
+                                    <i class="bi bi-binoculars"></i> 浏览招领信息
+                                </a>
+                                {% if session.get('user_id') %}
+                                <a href="{{ url_for('user.create_lost_item') }}" class="btn btn-outline-light btn-lg">
+                                    <i class="bi bi-pencil"></i> 发布失物信息
+                                </a>
+                                <a href="{{ url_for('user.create_found_item') }}" class="btn btn-outline-light btn-lg">
+                                    <i class="bi bi-hand-thumbs-up"></i> 发布招领信息
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 登录后自动弹出最新公告 -->
+{% if show_announcement_popup and latest_announcement %}
+<div class="modal fade" id="loginAnnouncementModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">
+                    <i class="bi bi-megaphone-fill"></i> 系统公告
+                </h5>
+            </div>
+            <div class="modal-body">
+                <h4 class="text-center mb-3">{{ latest_announcement.title }}</h4>
+                <div class="mb-3 text-center">
+                    <small class="text-muted">
+                        <i class="bi bi-calendar"></i> {{ latest_announcement.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                    </small>
+                </div>
+                <hr>
+                <div style="white-space: pre-wrap; line-height: 1.8; font-size: 1.05rem;">
+                    {{ latest_announcement.content }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">我知道了</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 页面加载完成后自动弹出公告
+let announcementModalShown = false; // 防止重复显示的标志
+
+document.addEventListener('DOMContentLoaded', function() {
+    // 确保页面完全加载后再执行
+    setTimeout(function() {
+        var modalElement = document.getElementById('loginAnnouncementModal');
+        if (modalElement && !announcementModalShown) {
+            // 检查模态框是否已经在显示
+            if (!modalElement.classList.contains('show')) {
+                var announcementModal = new bootstrap.Modal(modalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+                
+                // 设置已显示标志
+                announcementModalShown = true;
+                
+                // 确保模态框只显示一次
+                announcementModal.show();
+                
+                // 监听模态框关闭事件
+                modalElement.addEventListener('hidden.bs.modal', function () {
+                    announcementModal.dispose();
+                });
+                
+                // 为'我知道了'按钮添加点击事件，确保关闭
+                var confirmButton = modalElement.querySelector('.btn[data-bs-dismiss="modal"]');
+                if (confirmButton) {
+                    const clickHandler = function() {
+                        announcementModal.hide();
+                        confirmButton.removeEventListener('click', clickHandler);
+                    };
+                    confirmButton.addEventListener('click', clickHandler);
+                }
+            }
+        }
+    }, 500); // 减少延迟时间，让弹窗更快显示
+});
+</script>
+{% endif %}
+
+<!-- 搜索功能 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <form id="global-search-form" action="{{ url_for('user.global_search') }}" method="GET">
+            <div class="search-container">
+                <input type="text" id="global-search-input" name="q" class="form-control" placeholder="🔍 输入物品名称 / 地点快速查找">
+                <button type="submit" class="search-icon-btn btn btn-primary"><i class="bi bi-search"></i></button>
+            </div>
+        </form>
+        <div class="hot-search-tags mt-2">
+            <span class="hot-tag badge bg-light text-dark me-2">校园卡</span>
+            <span class="hot-tag badge bg-light text-dark me-2">钥匙</span>
+            <span class="hot-tag badge bg-light text-dark me-2">水杯</span>
+            <span class="hot-tag badge bg-light text-dark me-2">书籍</span>
+            <span class="hot-tag badge bg-light text-dark me-2">眼镜</span>
+        </div>
+    </div>
+</div>
+
+<!-- 统计卡片 -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ total_lost_items }}</div>
+            <div class="stats-label">失物信息</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ total_found_items }}</div>
+            <div class="stats-label">招领信息</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ total_claims }}</div>
+            <div class="stats-label">认领完成</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ total_users }}</div>
+            <div class="stats-label">活跃用户</div>
+        </div>
+    </div>
+</div>
+
+<!-- 最新失物信息 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h3 class="mb-3">最新失物信息</h3>
+    </div>
+</div>
+
+<div class="row">
+    {% for item in latest_lost_items %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="lost-item-card">
+            {% if item.image %}
+            <div class="lost-item-image" style="background-color: transparent; height: auto;">
+                <img src="{{ url_for('static', filename='uploads/' + item.image) }}" alt="{{ item.title }}" style="max-width: 100%; max-height: 150px; object-fit: cover;">
+            </div>
+            {% else %}
+            <div class="lost-item-image">
+                <i class="bi bi-question-circle"></i>
+            </div>
+            {% endif %}
+            <div class="lost-item-content">
+                <h5 class="lost-item-title">{{ item.title }}</h5>
+                <p class="lost-item-details">{{ item.description[:100] }}...</p>
+                <div class="d-flex justify-content-between">
+                    <span class="badge bg-light text-dark">{{ item.category }}</span>
+                    <span class="badge bg-light text-dark">{{ item.location }}</span>
+                </div>
+                <div class="lost-item-meta">
+                    <span><i class="bi bi-calendar"></i> {{ item.lost_time.strftime('%Y-%m-%d') if item.lost_time else '未知' }}</span>
+                    <span><i class="bi bi-geo-alt"></i> {{ item.location }}</span>
+                </div>
+                <a href="{{ url_for('user.lost_item_detail', item_id=item.id) }}" class="btn btn-primary btn-sm mt-3 w-100">查看详情</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not latest_lost_items %}
+<div class="empty-state">
+    <div class="empty-state-icon">
+        <i class="bi bi-search"></i>
+    </div>
+    <div class="empty-state-text">暂无失物信息</div>
+    <p class="text-muted">快去发布你的第一条信息吧 🚀</p>
+    {% if session.get('user_id') %}
+    <a href="{{ url_for('user.create_lost_item') }}" class="btn btn-primary">
+        <i class="bi bi-plus"></i> 发布失物信息
+    </a>
+    {% else %}
+    <a href="{{ url_for('user.login') }}" class="btn btn-primary">
+        <i class="bi bi-box-arrow-in-right"></i> 登录发布
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- 最新招领信息 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h3 class="mb-3">最新招领信息</h3>
+    </div>
+</div>
+
+<div class="row">
+    {% for item in latest_found_items %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="lost-item-card">
+            {% if item.image %}
+            <div class="lost-item-image" style="background-color: transparent; height: auto;">
+                <img src="{{ url_for('static', filename='uploads/' + item.image) }}" alt="{{ item.title }}" style="max-width: 100%; max-height: 150px; object-fit: cover;">
+            </div>
+            {% else %}
+            <div class="lost-item-image">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            {% endif %}
+            <div class="lost-item-content">
+                <h5 class="lost-item-title">{{ item.title }}</h5>
+                <p class="lost-item-details">{{ item.description[:100] }}...</p>
+                <div class="d-flex justify-content-between">
+                    <span class="badge bg-light text-dark">{{ item.category }}</span>
+                    <span class="badge bg-light text-dark">{{ item.location }}</span>
+                </div>
+                <div class="lost-item-meta">
+                    <span><i class="bi bi-calendar"></i> {{ item.found_time.strftime('%Y-%m-%d') if item.found_time else '未知' }}</span>
+                    <span><i class="bi bi-geo-alt"></i> {{ item.location }}</span>
+                </div>
+                <a href="{{ url_for('user.found_item_detail', item_id=item.id) }}" class="btn btn-success btn-sm mt-3 w-100">查看详情</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not latest_found_items %}
+<div class="empty-state">
+    <div class="empty-state-icon">
+        <i class="bi bi-search"></i>
+    </div>
+    <div class="empty-state-text">暂无招领信息</div>
+    <p class="text-muted">快去发布你的第一条信息吧 🚀</p>
+    {% if session.get('user_id') %}
+    <a href="{{ url_for('user.create_found_item') }}" class="btn btn-success">
+        <i class="bi bi-plus"></i> 发布招领信息
+    </a>
+    {% else %}
+    <a href="{{ url_for('user.login') }}" class="btn btn-success">
+        <i class="bi bi-box-arrow-in-right"></i> 登录发布
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

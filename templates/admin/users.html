@@ -1,0 +1,96 @@
+{% extends "admin/base.html" %}
+
+{% block title %}用户管理 - 管理后台 - 校园失物招领平台{% endblock %}
+
+{% block page_title %}用户管理{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-6">
+        <form method="GET" class="d-flex">
+            <input type="text" class="form-control me-2" name="search" placeholder="搜索用户..." value="{{ search }}">
+            <button type="submit" class="btn btn-primary">搜索</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>用户名</th>
+                    <th>邮箱</th>
+                    <th>手机号</th>
+                    <th>真实姓名</th>
+                    <th>状态</th>
+                    <th>注册时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in pagination.items %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>
+                        <span title="{{ user.email }}">{{ user.email | mask_email }}</span>
+                    </td>
+                    <td>
+                        {% if user.phone %}
+                        <span title="{{ user.phone }}">{{ user.phone | mask_phone }}</span>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>{{ user.real_name or '-' }}</td>
+                    <td>
+                        {% if user.is_frozen %}
+                        <span class="badge bg-danger">已冻结</span>
+                        {% else %}
+                        <span class="badge bg-success">正常</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        {% if user.is_frozen %}
+                        <form method="POST" action="{{ url_for('admin.unfreeze_user', user_id=user.id) }}" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            
+                            <button type="submit" class="btn btn-sm btn-success">解冻</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('admin.freeze_user', user_id=user.id) }}" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-warning">冻结</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if pagination.pages > 1 %}
+        <nav>
+            <ul class="pagination">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.users', page=pagination.prev_num, search=search) }}">上一页</a>
+                </li>
+                {% for page_num in pagination.iter_pages() %}
+                    {% if page_num %}
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.users', page=page_num, search=search) }}">{{ page_num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.users', page=pagination.next_num, search=search) }}">下一页</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

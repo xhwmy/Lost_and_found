@@ -1,0 +1,119 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} - 管理后台{% endblock %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+
+
+<!-- 搜索框 -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-8">
+                <input type="text" name="search" class="form-control" placeholder="搜索用户名/邮箱/姓名..." value="{{ search }}">
+                <input type="hidden" name="type" value="{{ account_type }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">搜索</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 冻结账户列表 -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>{{ title }}</span>
+        <small>总计: {{ accounts.total }} 个账户</small>
+    </div>
+    <div class="card-body">
+        {% if accounts.items %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>类型</th>
+                            <th>用户名</th>
+                            <th>邮箱</th>
+                            <th>姓名</th>
+                            <th>失败次数</th>
+                            <th>最后失败时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in accounts.items %}
+                            {% set account = item.account %}
+                            {% set acc_type = item.type %}
+                            <tr>
+                                <td>{{ account.id }}</td>
+                                <td>{% if acc_type == 'admin' %}管理员{% else %}用户{% endif %}</td>
+                                <td>{{ account.username }}</td>
+                                <td>{{ account.email }}</td>
+                                <td>{{ account.real_name or '-' }}</td>
+                                <td>{{ account.failed_login_attempts }}</td>
+                                <td>{{ account.last_failed_login.strftime('%Y-%m-%d %H:%M:%S') if account.last_failed_login else '-' }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('admin.unfreeze_account', account_id=account.id, account_type=acc_type) }}" style="display:inline;" onsubmit="return confirm('确定要解冻此账户吗？')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-success">解冻</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页 -->
+            {% if accounts.pages > 1 %}
+                <nav aria-label="分页">
+                    <ul class="pagination">
+                        {% if accounts.page > 1 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.frozen_accounts', page=accounts.page-1, search=search) }}">上一页</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">上一页</span>
+                            </li>
+                        {% endif %}
+
+                        {% for page_num in range(1, accounts.pages + 1) %}
+                            {% if page_num %}
+                                {% if page_num != accounts.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('admin.frozen_accounts', page=page_num, search=search) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if accounts.page < accounts.pages %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.frozen_accounts', page=accounts.page+1, search=search) }}">下一页</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">下一页</span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-person-slash display-4 text-muted"></i>
+                <p class="mt-3">暂无被冻结的账户</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

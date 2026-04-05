@@ -1,0 +1,139 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}失物信息详情{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">失物信息详情</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('admin.lost_items') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 返回列表
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3 class="card-title">{{ item.title }}</h3>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>分类：</strong>{{ item.category }}</p>
+                        <p><strong>丢失地点：</strong>{{ item.location }}</p>
+                        <p><strong>丢失时间：</strong>{{ item.lost_time.strftime('%Y-%m-%d') if item.lost_time else '未知' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>发布者：</strong>{{ item.creator.username }}</p>
+                        <p><strong>发布者邮箱：</strong>{{ item.creator.email }}</p>
+                        <p><strong>提交时间：</strong>{{ item.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <h5>详细描述</h5>
+                    <p style="white-space: pre-wrap;">{{ item.description }}</p>
+                </div>
+                
+                {% if item.image %}
+                <div class="mb-3">
+                    <h5>物品图片</h5>
+                    <img src="{{ url_for('static', filename='uploads/' + item.image) }}" alt="物品图片" class="img-fluid">
+                </div>
+                {% endif %}
+                
+                {% if item.reject_reason %}
+                <div class="alert alert-warning">
+                    <h5>驳回原因</h5>
+                    <p>{{ item.reject_reason }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">审核操作</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>当前状态：</strong>
+                    {% if item.status == 'pending' %}
+                        <span class="badge bg-warning">待审核</span>
+                    {% elif item.status == 'approved' %}
+                        <span class="badge bg-success">已通过</span>
+                    {% elif item.status == 'rejected' %}
+                        <span class="badge bg-danger">已驳回</span>
+                    {% elif item.status == 'completed' %}
+                        <span class="badge bg-info">已完成</span>
+                    {% endif %}
+                </p>
+                
+                {% if item.status == 'pending' %}
+                <form method="POST" action="{{ url_for('admin.approve_lost_item', item_id=item.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="d-grid gap-2 mb-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> 通过审核
+                        </button>
+                    </div>
+                </form>
+                
+                <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                    <i class="bi bi-x-circle"></i> 驳回
+                </button>
+                {% elif item.status == 'approved' %}
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle"></i> 已通过审核
+                </div>
+                {% elif item.status == 'rejected' %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-x-circle"></i> 已驳回
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">发布者信息</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>用户名：</strong>{{ item.creator.username }}</p>
+                <p><strong>邮箱：</strong>{{ item.creator.email }}</p>
+                <p><strong>真实姓名：</strong>{{ item.creator.real_name or '未填写' }}</p>
+                <p><strong>学号：</strong>{{ item.creator.student_id or '未填写' }}</p>
+                <p><strong>学校：</strong>{{ item.creator.school or '未填写' }}</p>
+                <p><strong>注册时间：</strong>{{ item.creator.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 驳回原因模态框 -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('admin.reject_lost_item', item_id=item.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">驳回失物信息</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">驳回原因 *</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-danger">确认驳回</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

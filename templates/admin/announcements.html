@@ -1,0 +1,78 @@
+{% extends "admin/base.html" %}
+
+{% block title %}系统公告 - 管理后台 - 校园失物招领平台{% endblock %}
+
+{% block page_title %}系统公告{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12 text-end">
+        <a href="{{ url_for('admin.create_announcement') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> 发布公告
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>标题</th>
+                    <th>优先级</th>
+                    <th>状态</th>
+                    <th>发布时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for announcement in pagination.items %}
+                <tr>
+                    <td>{{ announcement.id }}</td>
+                    <td>{{ announcement.title }}</td>
+                    <td>{{ announcement.priority }}</td>
+                    <td>
+                        {% if announcement.is_published %}
+                        <span class="badge bg-success">已发布</span>
+                        {% else %}
+                        <span class="badge bg-secondary">未发布</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ announcement.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <a href="{{ url_for('admin.edit_announcement', id=announcement.id) }}" 
+                           class="btn btn-sm btn-primary">编辑</a>
+                        <form method="POST" action="{{ url_for('admin.delete_announcement', id=announcement.id) }}" 
+                              style="display:inline;" onsubmit="return confirm('确定要删除吗？')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if pagination.pages > 1 %}
+        <nav>
+            <ul class="pagination">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.announcements', page=pagination.prev_num) }}">上一页</a>
+                </li>
+                {% for page_num in pagination.iter_pages() %}
+                    {% if page_num %}
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.announcements', page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.announcements', page=pagination.next_num) }}">下一页</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

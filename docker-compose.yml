@@ -1,0 +1,73 @@
+services:
+  campus_app:
+    build: .
+    ports:
+      - "8000:8000"
+    restart: always
+    command: gunicorn -w 4 -b 0.0.0.0:8000 --env APP_CONFIG=production app:app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - APP_CONFIG=production
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DATABASE_URL=mysql+pymysql://root:root@mysql/campus_crowdfunding
+      - SECRET_KEY=campus_crowdfunding_2026_secure_secret_key
+      - FIELD_ENCRYPTION_KEY=campus_crowdfunding_2026_secure_encryption_key
+      - ADMIN_DEFAULT_PASSWORD=admin123
+      - TZ=Asia/Shanghai
+    volumes:
+      - uploads_data:/app/static/uploads
+      - logs_data:/app/logs
+      - /etc/localtime:/etc/localtime:ro
+
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=campus_crowdfunding
+      - MYSQL_ROOT_HOST=%
+      - TZ=Asia/Shanghai
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: always
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    restart: always
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    ports:
+      - "9100:9100"
+    restart: always
+
+volumes:
+  mysql_data:
+  uploads_data:
+  logs_data:
+  prometheus_data:
+  grafana_data:

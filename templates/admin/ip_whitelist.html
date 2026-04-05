@@ -1,0 +1,113 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}IP白名单管理{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addIPModal">
+            <i class="bi bi-plus-circle"></i> 添加IP白名单
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>IP地址</th>
+                    <th>描述</th>
+                    <th>状态</th>
+                    <th>添加时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for whitelist in pagination.items %}
+                <tr>
+                    <td>{{ whitelist.id }}</td>
+                    <td><code>{{ whitelist.ip_address }}</code></td>
+                    <td>{{ whitelist.description or '-' }}</td>
+                    <td>
+                        {% if whitelist.is_active %}
+                        <span class="badge bg-success">启用</span>
+                        {% else %}
+                        <span class="badge bg-secondary">禁用</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ whitelist.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin.delete_ip_whitelist', whitelist_id=whitelist.id) }}" 
+                              style="display:inline;" onsubmit="return confirm('确定要删除吗？')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if not pagination.items %}
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-shield-check" style="font-size: 3rem;"></i>
+            <p class="mt-3">暂无IP白名单</p>
+        </div>
+        {% endif %}
+
+        {% if pagination.pages > 1 %}
+        <nav>
+            <ul class="pagination">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.ip_whitelist', page=pagination.prev_num) }}">上一页</a>
+                </li>
+                {% for page_num in pagination.iter_pages() %}
+                    {% if page_num %}
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.ip_whitelist', page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.ip_whitelist', page=pagination.next_num) }}">下一页</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 添加IP白名单模态框 -->
+<div class="modal fade" id="addIPModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('admin.add_ip_whitelist') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加IP白名单</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">IP地址</label>
+                        <input type="text" class="form-control" name="ip_address" 
+                               placeholder="例如: 192.168.1.1" required>
+                        <small class="text-muted">支持IPv4和IPv6地址</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">描述（可选）</label>
+                        <input type="text" class="form-control" name="description" 
+                               placeholder="例如: 办公室网络">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

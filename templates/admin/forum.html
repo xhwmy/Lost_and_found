@@ -1,0 +1,139 @@
+{% extends "admin/base.html" %}
+
+{% block title %}论坛管理 - 管理后台 - 校园失物招领平台{% endblock %}
+
+{% block page_title %}论坛管理{% endblock %}
+
+{% set User = get_flashed_messages.__globals__.User if get_flashed_messages.__globals__.get('User') else None %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('admin.create_forum_post') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> 发布帖子
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>标题</th>
+                    <th>作者</th>
+                    <th>分类</th>
+                    <th>回复数</th>
+                    <th>发布时间</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in pagination.items %}
+                <tr {% if post[0].is_deleted %}class="table-danger"{% endif %}>
+                    <td>{{ post[0].id }}</td>
+                    <td>
+                        <a href="{{ url_for('admin.forum_post_detail', post_id=post[0].id) }}" target="_blank">
+                            {% if post[0].is_deleted %}<del>{% endif %}
+                            {{ post[0].title }}
+                            {% if post[0].is_deleted %}</del>{% endif %}
+                        </a>
+                        {% if post[0].is_deleted %}
+                        <span class="badge bg-danger ms-1">已删除</span>
+                        {% endif %}
+                        {% if post[0].is_pinned %}
+                        <span class="badge bg-success ms-1">置顶</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ post[2] }}
+                        {% if post[0].is_admin_post %}
+                        <span class="badge bg-primary">管理员</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if post[0].category %}
+                        <span class="badge bg-secondary">{{ post[0].category }}</span>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>{{ post[1] }}</td>
+                    <td>{{ post[0].created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        {% if post[0].is_deleted %}
+                        <span class="badge bg-danger">已删除</span>
+                        {% else %}
+                        <span class="badge bg-success">正常</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin.forum_post_detail', post_id=post[0].id) }}" class="btn btn-sm btn-info" target="_blank">
+                            <i class="bi bi-eye"></i> 查看
+                        </a>
+                        {% if post[0].is_pinned %}
+                        <form method="POST" action="{{ url_for('admin.unpin_post', post_id=post[0].id) }}" 
+                              style="display:inline;" onsubmit="return confirm('确定要取消置顶这个帖子吗？')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-warning">取消置顶</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('admin.pin_post', post_id=post[0].id) }}" 
+                              style="display:inline;" onsubmit="return confirm('确定要置顶这个帖子吗？')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-success">置顶</button>
+                        </form>
+                        {% endif %}
+                        {% if not post[0].is_deleted %}
+                        <form method="POST" action="{{ url_for('admin.delete_post', post_id=post[0].id) }}" 
+                              style="display:inline;" onsubmit="return confirm('确定要删除这个帖子吗？')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('admin.restore_post', post_id=post[0].id) }}" 
+                              style="display:inline;" onsubmit="return confirm('确定要恢复这个帖子吗？')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-success">恢复</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if not pagination.items %}
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-chat-dots" style="font-size: 3rem;"></i>
+            <p class="mt-3">暂无帖子</p>
+        </div>
+        {% endif %}
+
+        {% if pagination.pages > 1 %}
+        <nav>
+            <ul class="pagination">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.forum', page=pagination.prev_num) }}">上一页</a>
+                </li>
+                {% for page_num in pagination.iter_pages() %}
+                    {% if page_num %}
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.forum', page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.forum', page=pagination.next_num) }}">下一页</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<div class="alert alert-warning mt-3">
+    <i class="bi bi-exclamation-triangle"></i> 
+    删除帖子为软删除操作，帖子内容仍保留在数据库中，但对用户不可见。
+</div>
+{% endblock %}

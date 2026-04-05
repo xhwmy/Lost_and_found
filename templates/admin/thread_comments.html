@@ -1,0 +1,113 @@
+{% extends "admin/base.html" %}
+
+{% block title %}线索评论管理{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2>线索评论管理</h2>
+    
+    <!-- 状态筛选 -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <form method="get" class="form-inline">
+                <div class="form-group mb-2">
+                    <label for="status" class="sr-only">状态</label>
+                    <select name="status" id="status" class="form-control">
+                        <option value="">全部状态</option>
+                        <option value="approved" {% if status == 'approved' %}selected{% endif %}>已发布</option>
+                        <option value="pending" {% if status == 'pending' %}selected{% endif %}>待审核</option>
+                        <option value="rejected" {% if status == 'rejected' %}selected{% endif %}>已拒绝</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary mb-2 ml-2">筛选</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 评论列表 -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>内容</th>
+                                    <th>关联信息</th>
+                                    <th>用户</th>
+                                    <th>创建时间</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for comment in pagination.items %}
+                                <tr>
+                                    <td>{{ comment.id }}</td>
+                                    <td>{{ comment.content[:100] }}{% if comment.content|length > 100 %}...{% endif %}</td>
+                                    <td>
+                                        {% if comment.lost_item %}
+                                            <span class="badge badge-secondary">失物: {{ comment.lost_item.title }}</span>
+                                        {% elif comment.found_item %}
+                                            <span class="badge badge-success">招领: {{ comment.found_item.title }}</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">未知</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ comment.user.username if comment.user else '未知用户' }}</td>
+                                    <td>{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        {% if comment.status == 'approved' %}
+                                            <span class="badge badge-success">已发布</span>
+                                        {% elif comment.status == 'pending' %}
+                                            <span class="badge badge-warning">待审核</span>
+                                        {% elif comment.status == 'rejected' %}
+                                            <span class="badge badge-danger">已拒绝</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <form method="post" action="{{ url_for('admin.delete_thread_comment', comment_id=comment.id) }}" style="display:inline;" onsubmit="return confirm('确定要删除这条评论吗？');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 分页 -->
+                    {% if pagination.pages > 1 %}
+                    <nav aria-label="评论分页">
+                        <ul class="pagination justify-content-center">
+                            {% if pagination.has_prev %}
+                                <li class="page-item"><a class="page-link" href="{{ url_for('admin.thread_comments', page=pagination.prev_num, status=status) }}">上一页</a></li>
+                            {% endif %}
+                            
+                            {% for page_num in pagination.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != pagination.page %}
+                                        <li class="page-item"><a class="page-link" href="{{ url_for('admin.thread_comments', page=page_num, status=status) }}">{{ page_num }}</a></li>
+                                    {% else %}
+                                        <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                                    {% endif %}
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if pagination.has_next %}
+                                <li class="page-item"><a class="page-link" href="{{ url_for('admin.thread_comments', page=pagination.next_num, status=status) }}">下一页</a></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

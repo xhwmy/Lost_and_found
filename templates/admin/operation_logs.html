@@ -1,0 +1,95 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}操作日志{% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <select class="form-select" name="operator_type">
+                    <option value="">全部类型</option>
+                    <option value="admin" {% if operator_type == 'admin' %}selected{% endif %}>管理员</option>
+                    <option value="user" {% if operator_type == 'user' %}selected{% endif %}>用户</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">筛选</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover table-sm">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>操作者类型</th>
+                        <th>操作者ID</th>
+                        <th>操作</th>
+                        <th>详情</th>
+                        <th>IP地址</th>
+                        <th>操作时间</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in pagination.items %}
+                    <tr>
+                        <td>{{ log.id }}</td>
+                        <td>
+                            {% if log.operator_type == 'admin' %}
+                            <span class="badge bg-danger">管理员</span>
+                            {% else %}
+                            <span class="badge bg-primary">用户</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ log.operator_id }}</td>
+                        <td><strong>{{ log.operation }}</strong></td>
+                        <td>
+                            <small class="text-muted">{{ log.details or '-' }}</small>
+                        </td>
+                        <td><code>{{ log.ip_address or '-' }}</code></td>
+                        <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if not pagination.items %}
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-journal-text" style="font-size: 3rem;"></i>
+            <p class="mt-3">暂无操作日志</p>
+        </div>
+        {% endif %}
+
+        {% if pagination.pages > 1 %}
+        <nav>
+            <ul class="pagination">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.operation_logs', page=pagination.prev_num, operator_type=operator_type) }}">上一页</a>
+                </li>
+                {% for page_num in pagination.iter_pages() %}
+                    {% if page_num %}
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.operation_logs', page=page_num, operator_type=operator_type) }}">{{ page_num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.operation_logs', page=pagination.next_num, operator_type=operator_type) }}">下一页</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<div class="alert alert-info mt-3">
+    <i class="bi bi-info-circle"></i> 
+    操作日志自动记录所有重要操作，包括登录、审核、修改等行为，保留时间为90天。
+</div>
+{% endblock %}

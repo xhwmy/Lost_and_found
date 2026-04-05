@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# 虚拟环境（关键！）
+venv/
+.venv/
+env/
+.env
+
+# 数据库
+*.db
+*.sqlite
+database.db
+instance/
+
+# 日志
+logs/
+*.log
+
+# 用户上传
+static/uploads/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 临时文件
+.trae/
+*.tmp
+*.bak
+*.bkp
+*.dtmp
+
+# 系统文件
+Thumbs.db
+.DS_Store
+
+# 配置文件（敏感）
+.env
+config_local.py
+
+# 测试/临时脚本（可选，如果你想保留也可以删除下面这行）
+test_*.py
+temp_*.py
+minimal_app.py

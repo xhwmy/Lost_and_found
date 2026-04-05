@@ -1,0 +1,52 @@
+{% extends "admin/base.html" %}
+
+{% block title %}管理员登录 - 校园失物招领平台{% endblock %}
+
+{% block page_title %}管理员登录{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center min-vh-100 align-items-center">
+    <div class="col-12 col-md-6 col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body p-5">
+                <h3 class="text-center mb-4">管理员登录</h3>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">用户名</label>
+                        <input type="text" class="form-control" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">密码</label>
+                        <input type="password" class="form-control" name="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">验证码</label>
+                        <div class="d-flex flex-wrap">
+                            <input type="text" class="form-control me-2 mb-2" name="captcha" required placeholder="请输入验证码" style="text-transform: uppercase;">
+                            <div class="bg-light p-2 rounded mb-2" style="min-width: 120px; text-align: center; font-family: monospace; font-size: 18px; letter-spacing: 2px; border: 1px solid #dee2e6;">
+                                {{ captcha }}
+                            </div>
+                        </div>
+                        <small class="text-muted">大小写不敏感</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">登录</button>
+                </form>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('admin.register') }}">注册管理员账号</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

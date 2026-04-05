@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}我的失物信息 - 校园失物招领平台{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">我的失物信息</h2>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <a href="{{ url_for('user.create_lost_item') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> 发布新失物信息
+        </a>
+    </div>
+</div>
+
+<!-- 我的失物信息列表 -->
+<div class="row">
+    {% for item in pagination.items %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">{{ item.title }}</h5>
+                <p class="card-text text-muted">{{ item.description[:100] }}...</p>
+                <div class="d-flex justify-content-between text-muted small">
+                    <span>分类: {{ item.category }}</span>
+                    <span>地点: {{ item.location }}</span>
+                </div>
+                <div class="text-muted small mt-2">
+                    <i class="bi bi-calendar"></i> 丢失时间: {{ item.lost_time.strftime('%Y-%m-%d') if item.lost_time else '未知' }}
+                </div>
+                <div class="mt-2">
+                    <span class="badge 
+                        {% if item.status == 'pending' %}bg-warning
+                        {% elif item.status == 'approved' %}bg-success
+                        {% elif item.status == 'rejected' %}bg-danger
+                        {% elif item.status == 'completed' %}bg-info
+                        {% endif %}">
+                        {% if item.status == 'pending' %}待审核
+                        {% elif item.status == 'approved' %}已审核
+                        {% elif item.status == 'rejected' %}已驳回
+                        {% elif item.status == 'completed' %}已完成
+                        {% endif %}
+                    </span>
+                </div>
+                <a href="{{ url_for('user.lost_item_detail', item_id=item.id) }}" class="btn btn-primary btn-sm mt-3 w-100 mb-2">查看详情</a>
+                <form method="post" action="{{ url_for('user.delete_lost_item', item_id=item.id) }}" onsubmit="return confirm('确定要删除此失物信息吗？此操作不可撤销！');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger btn-sm w-100">删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not pagination.items %}
+<div class="text-center text-muted py-5">
+    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+    <p class="mt-3">您还没有发布过失物信息</p>
+    <a href="{{ url_for('user.create_lost_item') }}" class="btn btn-primary">立即发布</a>
+</div>
+{% endif %}
+
+<!-- 分页 -->
+{% if pagination.pages > 1 %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="页面导航">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('user.my_lost_items', page=pagination.prev_num) }}">上一页</a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                {% if page_num != pagination.page %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('user.my_lost_items', page=page_num) }}">{{ page_num }}</a>
+                </li>
+                {% else %}
+                <li class="page-item active">
+                    <span class="page-link">{{ page_num }}</span>
+                </li>
+                {% endif %}
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">…</span>
+                </li>
+                {% endif %}
+                {% endfor %}
+                
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('user.my_lost_items', page=pagination.next_num) }}">下一页</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
