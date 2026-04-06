@@ -1,6 +1,0 @@
-@echo off
-echo Starting application...
-python --version
-echo Running app.py...
-python app.py > app_output.txt 2>&1
-echo Application finished. Check app_output.txt for results.

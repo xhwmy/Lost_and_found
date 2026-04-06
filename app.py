@@ -175,7 +175,7 @@ def create_app(config_name='default'):
 
 
 # 创建应用实例供Gunicorn使用
-config_name = os.environ.get('APP_CONFIG', 'production')
+config_name = os.environ.get('APP_CONFIG', 'default')
 app = create_app(config_name)
 
 if __name__ == '__main__':
